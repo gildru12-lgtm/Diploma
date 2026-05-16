@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STIA - Certificate Generator</title>
+    <style>
+        :root {
+            --gold: #d4af37;
+            --dark-gold: #aa8513;
+            --charcoal: #1a1a1a;
+            --cream: #fcfbf7;
+        }
+
+        /* הגדרות בסיסיות למסך */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* ממשק הניהול - מוסתר אוטומטית בהדפסה */
+        #admin-panel {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            max-width: 500px;
+            width: 100%;
+            margin-bottom: 40px;
+        }
+
+        #admin-panel h2 {
+            margin-top: 0;
+            color: var(--charcoal);
+            border-bottom: 2px solid var(--gold);
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #444;
+        }
+
+        .form-group input, .form-group select {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 5px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 14px;
+        }
+
+        button {
+            background: linear-gradient(135deg, var(--charcoal), #333);
+            color: white;
+            border: 1px solid var(--gold);
+            padding: 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s;
+            width: 100%;
+        }
+
+        button:hover {
+            background: var(--gold);
+            color: var(--charcoal);
+        }
+
+        /* --- קונטיינר התעודה - מותאם בול לממדי דף דפוס A4 לרוחב --- */
+        #certificate-container {
+            background-color: var(--cream);
+            width: 29.7cm;
+            height: 21.0cm;
+            position: relative;
+            box-sizing: border-box;
+            padding: 1.5cm;
+            border: 0.6cm solid var(--charcoal);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            font-family: 'Georgia', serif;
+            color: var(--charcoal);
+            overflow: hidden;
+            direction: ltr;
+        }
+
+        /* מסגרת פנימית כפולה מוזהבת */
+        #certificate-container::before {
+            content: '';
+            position: absolute;
+            top: 0.3cm; bottom: 0.3cm; left: 0.3cm; right: 0.3cm;
+            border: 3px double var(--gold);
+            pointer-events: none;
+        }
+
+        /* פינות העיטור */
+        .corner {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--gold);
+            pointer-events: none;
+        }
+        .top-left { top: 0.5cm; left: 0.5cm; border-right: none; border-bottom: none; }
+        .top-right { top: 0.5cm; right: 0.5cm; border-left: none; border-bottom: none; }
+        .bottom-left { bottom: 0.5cm; left: 0.5cm; border-right: none; border-top: none; }
+        .bottom-right { bottom: 0.5cm; right: 0.5cm; border-left: none; border-top: none; }
+
+        .cert-header {
+            text-align: center;
+            margin-bottom: 0.5cm;
+        }
+
+        .logo-container {
+            height: 2.2cm;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 0.2cm;
+        }
+        .logo-container img {
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .cert-title {
+            font-size: 26px;
+            color: var(--dark-gold);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin: 0.3cm 0 0.1cm 0;
+            font-weight: bold;
+        }
+
+        .cert-subtitle {
+            font-size: 14px;
+            font-style: italic;
+            color: #555;
+            margin-bottom: 0.4cm;
+        }
+
+        .student-name {
+            font-size: 34px;
+            border-bottom: 2px solid var(--gold);
+            display: inline-block;
+            padding: 0 40px 5px 40px;
+            margin: 0.2cm 0;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+
+        .cert-text {
+            font-size: 15px;
+            max-width: 65%;
+            margin: 0.4cm auto;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        /* תמונת חניך - מקובעת בצד ימין עם מרחק מדויק מהמסגרת */
+        .profile-photo-box {
+            position: absolute;
+            top: 4.5cm;
+            right: 1.5cm;
+            width: 3.2cm;
+            height: 4.2cm;
+            border: 2px solid var(--gold);
+            background: #eee;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            z-index: 2;
+        }
+        .profile-photo-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* אזור הדגלים והמדינות - יושב בול מתחת לתמונה מבלי לחרוג */
+        .countries-zone {
+            position: absolute;
+            top: 9.0cm;
+            right: 1.5cm;
+            width: 3.2cm;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            z-index: 2;
+        }
+        .countries-label {
+            font-size: 9px;
+            font-family: 'Arial', sans-serif;
+            text-transform: uppercase;
+            color: #666;
+            letter-spacing: 0.5px;
+            font-weight: bold;
+            text-align: center;
+        }
+        .flags-container {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            flex-wrap: wrap;
+            width: 100%;
+        }
+        .flags-container img {
+            width: 32px;
+            height: 22px;
+            object-fit: cover;
+            border: 1px solid #ddd;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        /* החלק התחתון - קבוע ומתוחם מעל השוליים התחתונים */
+        .cert-footer {
+            position: absolute;
+            bottom: 1.2cm;
+            left: 1.5cm;
+            right: 1.5cm;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding: 0 0.5cm;
+            box-sizing: border-box;
+        }
+
+        /* תיבות החתימה - מוגנות מפני חריגה מהדף */
+        .signature-block {
+            width: 5.5cm;
+            text-align: center;
+            border: 1px solid #e0e0e0;
+            background: rgba(255,255,255,0.5);
+            padding: 8px;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .signature-img-container {
+            height: 1.2cm;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            border-bottom: 1px solid var(--charcoal);
+            margin-bottom: 5px;
+            overflow: hidden;
+        }
+        .signature-img-container img {
+            max-height: 100%;
+            max-width: 100%;
+            object-fit: contain;
+        }
+        .signature-title {
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+            color: var(--charcoal);
+            font-family: 'Arial', sans-serif;
+        }
+        .signature-subtitle {
+            font-size: 9px;
+            color: #666;
+            font-family: 'Arial', sans-serif;
+            margin-top: 2px;
+        }
+
+        /* חותמת ה-Seal המרכזית - מקובעת באמצע ואף פעם לא עולה על אלמנטים אחרים */
+        .center-seal {
+            width: 2.4cm;
+            height: 2.4cm;
+            border-radius: 50%;
+            border: 3px dashed var(--gold);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Arial', sans-serif;
+            font-weight: bold;
+            color: var(--dark-gold);
+            font-size: 10px;
+            text-align: center;
+            background: radial-gradient(circle, #fff 60%, var(--cream) 100%);
+            box-shadow: 0 0 10px rgba(212,175,55,0.2);
+            box-sizing: border-box;
+        }
+        .seal-inner {
+            border: 1px solid var(--gold);
+            border-radius: 50%;
+            width: 2.1cm;
+            height: 2.1cm;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .date-block {
+            font-size: 10px;
+            font-family: 'Arial', sans-serif;
+            color: #444;
+            margin-top: 2px;
+        }
+
+        /* --- הגדרות קשיחות להדפסה ישירה לפלט מושלם --- */
+        @media print {
+            @page {
+                size: A4 landscape; /* מגדיר למדפסת להסתובב אוטומטית לרוחב */
+                margin: 0;         /* מבטל שוליים של הדפדפן */
+            }
+            #admin-panel { 
+                display: none;     /* מעלים את לוח הניהול מהדף המודפס */
+            }
+            body { 
+                background: white; 
+                padding: 0; 
+                margin: 0;
+            }
+            #certificate-container { 
+                box-shadow: none; 
+                position: absolute;
+                left: 0; 
+                top: 0;
+                width: 29.7cm;
+                height: 21.0cm;
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ממשק הניהול -->
+    <div id="admin-panel">
+        <h2>מערכת הפקת תעודות - STIA</h2>
+        
+        <div class="form-group">
+            <label>שם החניך (באנגלית):</label>
+            <input type="text" id="input-name" value="ELIAV COHEN">
+        </div>
+
+        <div class="form-group">
+            <label>סוג ההסמכה / קורס:</label>
+            <input type="text" id="input-program" value="PROFESSIONAL TACTICAL INSTRUCTOR PROGRAM">
+        </div>
+
+        <div class="form-group">
+            <label>תאריך הסמכה:</label>
+            <input type="date" id="input-date" value="2026-05-16">
+        </div>
+
+        <div class="form-group">
+            <label>תמונת חניך (פספורט):</label>
+            <input type="file" id="input-photo" accept="image/*">
+        </div>
+
+        <div class="form-group">
+            <label>חתימת מנכ"ל (אופציונלי):</label>
+            <input type="file" id="input-sig-ceo" accept="image/*">
+        </div>
+
+        <div class="form-group">
+            <label>חתימת מדריך ראשי (אופציונלי):</label>
+            <input type="file" id="input-sig-chief" accept="image/*">
+        </div>
+
+        <div class="form-group">
+            <label>מדינת חברות ראשית:</label>
+            <select id="input-main-flag">
+                <option value="il">ישראל 🇮🇱</option>
+                <option value="us">ארצות הברית 🇺🇸</option>
+                <option value="it">איטליה 🇮🇹</option>
+                <option value="none">ללא מדינה</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>מדינות שותפות בארגון:</label>
+            <div class="checkbox-group">
+                <div class="checkbox-item"><input type="checkbox" name="partner-flags" value="il"> ישראל</div>
+                <div class="checkbox-item"><input type="checkbox" name="partner-flags" value="us"> ארה"ב</div>
+                <div class="checkbox-item"><input type="checkbox" name="partner-flags" value="it"> איטליה</div>
+                <div class="checkbox-item"><input type="checkbox" name="partner-flags" value="gb"> בריטניה</div>
+                <div class="checkbox-item"><input type="checkbox" name="partner-flags" value="de"> גרמניה</div>
+            </div>
+        </div>
+
+        <button onclick="generateCertificate()">הפק תעודה מוכנה להדפסה</button>
+    </div>
+
+    <!-- אזור התעודה הגרפי - מוגדר במידות ס"מ מדויקות -->
+    <div id="certificate-container">
+        <div class="corner top-left"></div>
+        <div class="corner top-right"></div>
+        <div class="corner bottom-left"></div>
+        <div class="corner bottom-right"></div>
+
+        <!-- תמונת חניך - ימין קבוע -->
+        <div class="profile-photo-box" id="cert-photo-box">
+            <span style="color: #999; font-size: 11px; font-family: Arial;">No Photo</span>
+        </div>
+
+        <!-- אזור המדינות והשותפויות - מתחת לתמונה בלבד -->
+        <div class="countries-zone">
+            <div class="countries-label">Member State</div>
+            <div class="flags-container" id="cert-flags-container"></div>
+        </div>
+
+        <!-- ראש התעודה והלוגו -->
+        <div class="cert-header">
+            <div class="logo-container">
+                <img src="logo.png" alt="STIA Logo" onerror="this.parentNode.innerHTML='STIA';">
+            </div>
+            
+            <div class="cert-title">Advanced Professional Certification</div>
+            <div class="cert-subtitle">This confirms that</div>
+        </div>
+
+        <!-- מרכז התעודה -->
+        <div style="text-align: center;">
+            <div class="student-name" id="cert-name">ELIAV COHEN</div>
+            <div class="cert-text">
+                has successfully completed all requirements and tactical evaluations for the <br>
+                <strong id="cert-program" style="color: var(--charcoal);">PROFESSIONAL TACTICAL INSTRUCTOR PROGRAM</strong>.<br>
+                Awarded for exceptional skill, dedication, and mastery of instructional methodologies in tactical and security operations.
+            </div>
+        </div>
+
+        <!-- חלק תחתון - נעול לרצפת העמוד -->
+        <div class="cert-footer">
+            
+            <!-- תיבת חתימה 1 -->
+            <div class="signature-block">
+                <div class="signature-img-container" id="cert-sig-ceo">
+                    <span style="font-family: 'Brush Script MT', cursive, sans-serif; font-size: 20px;">Eliav Cohen</span>
+                </div>
+                <div class="signature-title">Signature</div>
+                <div class="signature-subtitle">Chief Executive Officer</div>
+            </div>
+
+            <!-- חותמת Seal דיגיטלית - קבועה במרכז -->
+            <div class="center-seal">
+                <div class="seal-inner">
+                    <span>STIA</span>
+                    <span style="font-size: 6px; color: #666; letter-spacing: 0.5px;">OFFICIAL SEAL</span>
+                    <div class="date-block" id="cert-date">16/05/2026</div>
+                </div>
+            </div>
+
+            <!-- תיבת חתימה 2 -->
+            <div class="signature-block">
+                <div class="signature-img-container" id="cert-sig-chief">
+                    <span style="font-family: 'Brush Script MT', cursive, sans-serif; font-size: 20px;">Ariel Levi</span>
+                </div>
+                <div class="signature-title">Chief Instructor</div>
+                <div class="signature-subtitle">Global Training Director</div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        function generateCertificate() {
+            // עדכון טקסטים
+            document.getElementById('cert-name').innerText = document.getElementById('input-name').value;
+            document.getElementById('cert-program').innerText = document.getElementById('input-program').value;
+            
+            // תאריך
+            const rawDate = document.getElementById('input-date').value;
+            if(rawDate) {
+                const dateObj = new Date(rawDate);
+                const formattedDate = String(dateObj.getDate()).padStart(2, '0') + '/' + 
+                                      String(dateObj.getMonth() + 1).padStart(2, '0') + '/' + 
+                                      dateObj.getFullYear();
+                document.getElementById('cert-date').innerText = formattedDate;
+            }
+
+            // ניהול דגלים דינמי מתחת לתמונה
+            const flagsContainer = document.getElementById('cert-flags-container');
+            flagsContainer.innerHTML = ''; 
+
+            const mainFlag = document.getElementById('input-main-flag').value;
+            if(mainFlag !== 'none') {
+                flagsContainer.innerHTML += `<img src="https://flagcdn.com/w160/${mainFlag}.png" alt="Main Flag" title="Main Member State">`;
+            }
+
+            const partnerCheckboxes = document.querySelectorAll('input[name="partner-flags"]:checked');
+            partnerCheckboxes.forEach(checkbox => {
+                if(checkbox.value !== mainFlag) {
+                    flagsContainer.innerHTML += `<img src="https://flagcdn.com/w160/${checkbox.value}.png" alt="Partner Flag" title="Partner State">`;
+                }
+            });
+
+            // פתיחת חלון ההדפסה של הדפדפן
+            window.print();
+        }
+
+        // טיפול בהעלאת קבצים
+        function handleImageUpload(inputId, targetId) {
+            document.getElementById(inputId).addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        const targetBox = document.getElementById(targetId);
+                        targetBox.innerHTML = `<img src="${event.target.result}" alt="Uploaded Image">`;
+                    }
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+
+        handleImageUpload('input-photo', 'cert-photo-box');
+        handleImageUpload('input-sig-ceo', 'cert-sig-ceo');
+        handleImageUpload('input-sig-chief', 'cert-sig-chief');
+    </script>
+</body>
+</html>
