@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>STIA | Ultimate A4 Certificate Generator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=Oswald:wght@500;700&family=Great+Vibes&family=Cinzel:wght@600;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        :root { --gold: #B8945E; --gold-light: #DFD0B8; --dark: #111111; --border: rgba(184, 148, 94, 0.4); }
+        body { background-color: #050505; color: #E0E0E0; font-family: 'Inter', sans-serif; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+        
+        /* עיצוב טופס הניהול */
+        .generator-container { background: #111; border: 1px solid var(--border); border-radius: 12px; padding: 15px; width: 100%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.7); margin-bottom: 20px; box-sizing: border-box; }
+        .generator-container h2 { margin: 0 0 15px 0; color: #FFF; font-family: 'Oswald', sans-serif; font-size: 1.3rem; text-align: center; }
+        .input-group { margin-bottom: 10px; text-align: right; }
+        .input-group label { display: block; font-size: 0.8rem; color: var(--gold); margin-bottom: 3px; font-weight: bold; }
+        .input-group input, .input-group select, .input-group textarea { width: 100%; padding: 10px; background: #1A1A1A; border: 1px solid #333; border-radius: 6px; color: #FFF; font-size: 0.95rem; box-sizing: border-box; font-family: inherit; }
+        
+        .file-input-wrapper { position: relative; margin-bottom: 10px; }
+        .btn-file { width: 100%; padding: 10px; background: #222; color: var(--gold); border: 1px solid #444; border-radius: 6px; font-size: 0.9rem; font-weight: bold; cursor: pointer; text-align: center; display: block; box-sizing: border-box; }
+        #input-photo { position: absolute; left: 0; top: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; }
+        .btn-generate { width: 100%; padding: 14px; background: var(--gold); color: #000; border: none; border-radius: 6px; font-size: 1rem; font-weight: bold; cursor: pointer; text-transform: uppercase; font-family: 'Oswald', sans-serif; margin-top: 10px; display: flex; justify-content: center; align-items: center; gap: 8px; }
+
+        #output-image-container { margin-top: 25px; text-align: center; display: none; width: 100%; max-width: 440px; }
+        #final-card-image { max-width: 100%; border: 2px solid var(--gold); box-shadow: 0 15px 35px rgba(0,0,0,0.9); background: #FAF6F0; }
+
+        /* מבנה תעודת ה-A4 הרשמית */
+        #member-card-wrap { padding: 5px; }
+        .a4-certificate { width: 440px; height: 620px; background: #FAF6F0 !important; border: 3px solid var(--gold); padding: 22px 25px; position: relative; box-shadow: 0 20px 40px rgba(0,0,0,0.8); display: flex; flex-direction: column; align-items: center; box-sizing: border-box; text-align: left; direction: ltr; color: #111111 !important; overflow: hidden; }
+        
+        .a4-certificate::before { content: ""; position: absolute; top: 10px; left: 10px; right: 10px; bottom: 10px; border: 1px solid rgba(184, 148, 94, 0.6); pointer-events: none; }
+        
+        .corner-decoration { position: absolute; width: 20px; height: 20px; border: 2px solid var(--gold); pointer-events: none; }
+        .top-left { top: 14px; left: 14px; border-right: none; border-bottom: none; }
+        .top-right { top: 14px; right: 14px; border-left: none; border-bottom: none; }
+        .bottom-left { bottom: 14px; left: 14px; border-right: none; border-top: none; }
+        .bottom-right { bottom: 14px; right: 14px; border-left: none; border-top: none; }
+
+        .cert-header { display: flex; flex-direction: column; align-items: center; width: 100%; margin-bottom: 8px; margin-right: 20px; }
+        .logo-box-large { width: 75px; height: 75px; display: flex; justify-content: center; align-items: center; margin-bottom: 4px; }
+        .logo-box-large img { width: 100%; height: auto; max-height: 75px; object-fit: contain; }
+        
+        .title-container { width: 90%; text-align: center; margin-top: 2px; margin-bottom: 2px; position: relative; padding: 4px 0; }
+        .title-line-top { position: absolute; top: 0; left: 5%; width: 90%; height: 2px; background: linear-gradient(90deg, transparent, var(--gold), transparent); }
+        .title-line-bottom { position: absolute; bottom: 0; left: 5%; width: 90%; height: 1px; background: linear-gradient(90deg, transparent, var(--gold), transparent); }
+        .cert-title { font-family: 'Cinzel', serif; font-size: 1.1rem; color: #111111 !important; letter-spacing: 1px; text-transform: uppercase; font-weight: 900; margin: 0; }
+        
+        .cert-subtitle { font-size: 0.6rem; text-transform: uppercase; color: #555555 !important; letter-spacing: 1px; font-weight: 700; margin-top: 4px; margin-bottom: 6px; font-family: 'Inter', sans-serif; }
+
+        .secure-badge-area { background: linear-gradient(135deg, #141414 0%, #080808 100%) !important; border-radius: 8px; border: 1px solid var(--gold); width: 100%; padding: 12px; box-sizing: border-box; display: flex; flex-direction: column; color: #FFFFFF !important; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.15); }
+        
+        .badge-top { display: flex; justify-content: space-between; gap: 15px; margin-bottom: 8px; }
+        .badge-info-left { display: flex; flex-direction: column; gap: 6px; flex-grow: 1; width: calc(100% - 100px); }
+        
+        .card-photo-right { width: 85px; height: 105px; border: 1px solid var(--gold); background: #000000; border-radius: 4px; overflow: hidden; display: flex; flex-direction: column; justify-content: center; align-items: center; flex-shrink: 0; box-shadow: 0 5px 15px rgba(0,0,0,0.4); }
+        .card-photo-right img { width: 100%; height: 100%; object-fit: cover; display: none; }
+        .photo-placeholder { font-size: 0.5rem; color: #444444; text-transform: uppercase; text-align: center; font-weight: bold; }
+
+        .info-block { background: rgba(255,255,255,0.03); padding: 5px 8px; border-radius: 4px; border-left: 2px solid var(--gold); }
+        .label { font-size: 0.48rem; text-transform: uppercase; color: #888888 !important; letter-spacing: 1px; margin-bottom: 1px; }
+        .value { font-size: 0.8rem; font-weight: 700; color: #FFFFFF !important; }
+        .value-id { font-family: monospace; color: var(--gold) !important; font-size: 0.85rem; }
+        
+        .specialty-block { width: 100%; margin-bottom: 6px; }
+        .value-specialty { font-size: 0.78rem; color: var(--gold) !important; font-weight: 700; line-height: 1.3; white-space: pre-line; }
+
+        /* שורת הדגלים המובטחת */
+        .flags-row { display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.02); padding: 4px 8px; border-radius: 4px; border-left: 2px solid #FFFFFF; margin-bottom: 6px; }
+        .flag-display { display: flex; gap: 8px; align-items: center; }
+        .flag-img { width: 22px; height: 15px; object-fit: cover; border-radius: 1px; border: 1px solid rgba(255,255,255,0.2); background: #222; }
+
+        .clock-block { background: rgba(184, 148, 94, 0.07); border-left-color: #FFFFFF; margin-top: auto; }
+        .live-time { font-family: monospace; font-size: 0.75rem; color: #FFFFFF !important; font-weight: 700; }
+        
+        .status-row { display: flex; justify-content: space-between; align-items: center; padding-top: 6px; border-top: 1px solid rgba(255,255,255,0.05); margin-top: 4px; }
+        .tier-text { font-family: 'Oswald', sans-serif; font-size: 0.95rem; text-transform: uppercase; color: var(--gold) !important; }
+        .status-badge { display: flex; align-items: center; gap: 4px; background: rgba(37, 211, 102, 0.1); padding: 3px 8px; border-radius: 20px; color: #25D366 !important; font-size: 0.62rem; font-weight: 900; text-transform: uppercase; }
+        .pulse-dot { width: 5px; height: 5px; background: #25D366; border-radius: 50%; }
+
+        .cert-footer { width: 100%; display: flex; justify-content: space-between; align-items: flex-end; margin-top: auto; padding-top: 10px; border-top: 1px dashed #BBBBBB; position: relative; }
+        .official-seal { width: 60px; height: 60px; border: 1px solid var(--gold); border-radius: 50%; display: flex; justify-content: center; align-items: center; background: transparent; position: relative; box-shadow: 0 0 0 3px rgba(184,148,94,0.1); margin-bottom: 2px; overflow: hidden; }
+        .official-seal img { width: 100%; height: 100%; object-fit: contain; }
+        
+        .signature-block { text-align: center; width: 120px; }
+        .signature-line { font-family: 'Great Vibes', cursive; font-size: 1.4rem; color: #111111 !important; min-height: 25px; line-height: 1; margin-bottom: 1px; }
+        .signature-title { font-size: 0.5rem; text-transform: uppercase; color: #555555 !important; font-weight: bold; border-top: 1px solid var(--gold); padding-top: 2px; letter-spacing: 0.5px; }
+        .cert-motto { font-size: 0.55rem; font-style: italic; color: #444444 !important; font-weight: 700; text-align: center; margin-bottom: 2px; font-family: 'Cinzel', serif; letter-spacing: 0.5px; }
+    </style>
+</head>
+<body>
+
+    <div class="generator-container">
+        <h2>STIA Advanced A4 Panel</h2>
+        
+        <div class="input-group">
+            <label>סוג התעודה (כותרת ראשית)</label>
+            <select id="input-cert-type" onchange="updateCard()">
+                <option value="Certified Instructor Certificate">Certified Instructor Certificate</option>
+                <option value="Certificate of Qualification">Certificate of Qualification</option>
+                <option value="Certificate of Tactical Credential">Certificate of Tactical Credential</option>
+            </select>
+        </div>
+
+        <div class="input-group">
+            <label>Certified Element (אלמנט/קורס מוסמך)</label>
+            <select id="input-spec-select" onchange="updateCard()">
+                <option value="Krav Maga Instructor (Level 1)">Krav Maga Instructor (Level 1)</option>
+                <option value="Krav Maga Instructor (Level 2)">Krav Maga Instructor (Level 2)</option>
+                <option value="Krav Maga Instructor (Level 3)">Krav Maga Instructor (Level 3)</option>
+                <option value="Krav Maga Master Instructor">Krav Maga Master Instructor</option>
+                <option value="Pistol Instructor">Pistol Instructor</option>
+                <option value="Long Rifle & Carbine Instructor">Long Rifle & Carbine Instructor</option>
+                <option value="Firearms Instructor">Firearms Instructor</option>
+                <option value="CQB Instructor">CQB Instructor</option>
+            </select>
+        </div>
+
+        <div class="input-group">
+            <label>Instructor Level (דרגה רשמית)</label>
+            <select id="input-tier" onchange="updateCard()">
+                <option value="Basic Instructor">Basic Instructor</option>
+                <option value="Advanced Instructor">Advanced Instructor</option>
+                <option value="Tactical Instructor (Level 1)">Tactical Instructor (Level 1)</option>
+                <option value="Tactical Instructor (Level 2)">Tactical Instructor (Level 2)</option>
+                <option value="Master Instructor">Master Instructor</option>
+            </select>
+        </div>
+
+        <div class="input-group">
+            <label>תמונת פספורט של המדריך</label>
+            <div class="file-input-wrapper">
+                <div class="btn-file" id="file-label">בחר תמונה מהגלריה</div>
+                <input type="file" id="input-photo" accept="image/*" onchange="previewPhoto(this)">
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label>Member Name (באנגלית)</label>
+            <input type="text" id="input-name" value="GIL DRUCKER" oninput="updateCard()">
+        </div>
+        
+        <div class="input-group">
+            <label>Credential ID</label>
+            <input type="text" id="input-id" value="STIA-2026-8954" oninput="updateCard()">
+        </div>
+
+        <div class="input-group">
+            <label>מדינת מוצא / שפה ראשית</label>
+            <select id="input-flag-origin" onchange="updateCard()">
+                <option value="il|Hebrew / Israel">עברית / ישראל</option>
+                <option value="us|English / USA">אנגלית / ארה"ב</option>
+                <option value="gb|English / UK">אנגלית / בריטניה</option>
+                <option value="co|Spanish / Colombia">ספרדית / קולומביה</option>
+                <option value="gt|Spanish / Guatemala">ספרדית / גואטמלה</option>
+                <option value="ar|Spanish / Argentina">ספרדית / ארגנטינה</option>
+                <option value="do|Spanish / Dominican Rep.">ספרדית / הרפובליקה הדומיניקנית</option>
+                <option value="cz|Czech / Czech Rep.">צ'כית / צ'כיה</option>
+                <option value="hu|Hungarian / Hungary">הונגרית / הונגריה</option>
+                <option value="pl|Polish / Poland">פולנית / פולין</option>
+                <option value="at|German / Austria">גרמנית / אוסטריה</option>
+                <option value="it|Italian / Italy">איטלקית / איטליה</option>
+                <option value="de|German / Germany">גרמנית / גרמניה</option>
+                <option value="fr|French / France">צרפתית / צרפת</option>
+            </select>
+        </div>
+
+        <div class="input-group">
+            <label>שפה שנייה / שותפות אסטרטגית</label>
+            <select id="input-flag-partner" onchange="updateCard()">
+                <option value="us">אנגלית / ארה"ב</option>
+                <option value="il">עברית / ישראל</option>
+                <option value="gb">אנגלית / בריטניה</option>
+                <option value="co">ספרדית / קולומביה</option>
+                <option value="gt">ספרדית / גואטמלה</option>
+                <option value="ar">ספרדית / ארגנטינה</option>
+                <option value="do">ספרדית / הרפובליקה הדומיניקנית</option>
+                <option value="cz">צ'כית / צ'כיה</option>
+                <option value="hu">הונגרית / הונגריה</option>
+                <option value="pl">פולנית / פולין</option>
+                <option value="at">גרמנית / אוסטריה</option>
+                <option value="it">איטלקית / איטליה</option>
+                <option value="de">גרמנית / גרמניה</option>
+                <option value="fr">צרפתית / צרפת</option>
+            </select>
+        </div>
+
+        <button class="btn-generate" onclick="generateImageCard()">הפק תעודת A4 רשמית ומקושטת</button>
+    </div>
+
+    <div id="member-card-wrap">
+        <div class="a4-certificate" id="member-card">
+            
+            <div class="corner-decoration top-left"></div>
+            <div class="corner-decoration top-right"></div>
+            <div class="corner-decoration bottom-left"></div>
+            <div class="corner-decoration bottom-right"></div>
+            
+            <div class="cert-header">
+                <div class="logo-box-large">
+                    <img src="logo.png" alt="STIA">
+                </div>
+                
+                <div class="title-container">
+                    <div class="title-line-top"></div>
+                    <h1 class="cert-title" id="card-cert-title">Certified Instructor Certificate</h1>
+                    <div class="title-line-bottom"></div>
+                </div>
+                
+                <div class="cert-subtitle">STIA Global Accreditation • Official Verification</div>
+            </div>
+            
+            <div class="secure-badge-area">
+                <div class="badge-top">
+                    <div class="badge-info-left">
+                        <div class="info-block"><div class="label">Member Name</div><div class="value" id="card-name">GIL DRUCKER</div></div>
+                        <div class="info-block"><div class="label">Credential ID</div><div class="value value-id" id="card-id">STIA-2026-8954</div></div>
+                    </div>
+                    
+                    <div class="card-photo-right">
+                        <img id="card-photo" src="" alt="Instructor Photo">
+                        <div class="photo-placeholder" id="photo-placeholder">PHOTO<br>REQUIRED</div>
+                    </div>
+                </div>
+                
+                <div class="info-block specialty-block">
+                    <div class="label">Certified Elements</div>
+                    <div class="value-specialty" id="card-spec">Krav Maga Instructor (Level 1)</div>
+                </div>
+
+                <div class="flags-row">
+                    <div style="flex-grow: 1;">
+                        <div class="label" style="color: var(--gold);">Spoken Languages & Alliance</div>
+                        <div class="value" id="card-flag-text" style="font-size: 0.65rem; color: #FFF; text-transform: uppercase;">Hebrew / Israel</div>
+                    </div>
+                    <div class="flag-display">
+                        <img id="card-flag-1" class="flag-img" src="" alt="Flag 1">
+                        <img id="card-flag-2" class="flag-img" src="" alt="Flag 2">
+                    </div>
+                </div>
+
+                <div class="info-block clock-block">
+                    <div class="label" style="color: var(--gold); font-weight: 700;">Verification Timestamp</div>
+                    <div class="live-time" id="live-clock">Securing...</div>
+                </div>
+                
+                <div class="status-row">
+                    <div class="tier-text" id="card-tier">Basic Instructor</div>
+                    <div class="status-badge"><div class="pulse-dot"></div>Active</div>
+                </div>
+            </div>
+
+            <div class="cert-footer">
+                <div class="official-seal">
+                    <img src="seal.png" alt="Official Seal" onerror="this.style.display='none';">
+                </div>
+                
+                <div class="cert-motto">"Professionalism has no finish line"</div>
+                
+                <div class="signature-block">
+                    <div class="signature-line">G. Drucker</div>
+                    <div class="signature-title">Chief Instructor</div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="output-image-container">
+        <h3>התעודה המפוארת מוכנה!</h3>
+        <p>גע נגיעה ארוכה בתמונה למטה כדי לשמור לגלריה בגודל מלא:</p>
+        <img id="final-card-image" src="" alt="STIA Official A4 Certificate">
+    </div>
+
+    <script>
+        // בנק דגלים מובנה וקטורי - כולל תיקון מלא, גיאומטרי ומדויק לדגל ישראל
+        const EMBEDDED_FLAGS = {
+            il: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 220 160'><rect width='220' height='160' fill='white'/><rect y='15' width='220' height='25' fill='%230038a8'/><rect y='120' width='220' height='25' fill='%230038a8'/><g stroke='%230038a8' stroke-width='5.5' fill='none' stroke-linejoin='round'><polygon points='110,48 138,96 82,96'/><polygon points='110,112 138,64 82,64'/></g></svg>",
+            us: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 19 10'><rect width='19' height='10' fill='%23b22234'/><path d='M0,0.77h19M0,2.3h19M0,3.85h19M0,5.38h19M0,6.92h19M0,8.46h19' stroke='white' stroke-width='0.77'/><rect width='7.6' height='5.38' fill='%233c3b6e'/></svg>",
+            gb: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 50 30'><rect width='50' height='30' fill='%23012169'/><path d='M0,0 L50,30 M0,30 L50,0' stroke='white' stroke-width='6'/><path d='M0,0 L50,30 M0,30 L50,0' stroke='%23C8102E' stroke-width='4'/><path d='M25,0 L25,30 M0,15 L50,15' stroke='white' stroke-width='10'/><path d='M25,0 L25,30 M0,15 L50,15' stroke='%23C8102E' stroke-width='6'/></svg>",
+            co: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 3 2'><rect width='3' height='1' fill='%23FCD116'/><rect y='1' width='3' height='0.5' fill='%23003893'/><rect y='1.5' width='3' height='0.5' fill='%23CE1126'/></svg>",
+            gt: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 9 6'><rect width='3' height='6' fill='%234997D0'/><rect x='3' width='3' height='6' fill='white'/><rect x='6' width='3' height='6' fill='%234997D0'/><circle cx='4.5' cy='3' r='0.6' fill='%23225A2B'/></svg>",
+            ar: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 9 6'><rect width='9' height='2' fill='%2374ACDF'/><rect y='2' width='9' height='2' fill='white'/><rect y='4' width='9' height='2' fill='%2374ACDF'/><circle cx='4.5' cy='3' r='0.4' fill='%23F3A813'/></svg>",
+            do: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 5'><rect width='8' height='5' fill='white'/><rect width='3.6' height='2.2' fill='%23002D62'/><rect x='4.4' width='3.6' height='2.2' fill='%23CE1126'/><rect y='2.8' width='3.6' height='2.2' fill='%23CE1126'/><rect x='4.4' y='2.8' width='3.6' height='2.2' fill='%23002D62'/><rect x='3.6' y='2' width='0.8' height='1' fill='%23007A33'/></svg>",
+            cz: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 3 2'><rect width='3' height='1' fill='white'/><rect y='1' width='3' height='1' fill='%23D7141A'/><polygon points='0,0 1.5,1 0,2' fill='%2311457E'/></svg>",
+            hu: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 3 2'><rect width='3' height='0.66' fill='%23CD2A3E'/><rect y='0.66' width='3' height='0.66' fill='white'/><rect y='1.32' width='3' height='0.68' fill='%23436F4D'/></svg>",
+            pl: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 5'><rect width='8' height='2.5' fill='white'/><rect y='2.5' width='8' height='2.5' fill='%23D4213D'/></svg>",
+            at: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 3 2'><rect width='3' height='0.66' fill='%23ED2939'/><rect y='0.66' width='3' height='0.66' fill='white'/><rect y='1.32' width='3' height='0.68' fill='%23ED2939'/></svg>",
+            it: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 3 2'><rect width='1' height='2' fill='%23009246'/><rect x='1' width='1' height='2' fill='white'/><rect x='2' width='1' height='2' fill='%23CE2B37'/></svg>",
+            de: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 5 3'><rect width='5' height='1' fill='black'/><rect y='1' width='5' height='1' fill='%23FF0000'/><rect y='2' width='5' height='1' fill='%23FFCC00'/></svg>",
+            fr: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 3 2'><rect width='1' height='2' fill='%23002395'/><rect x='1' width='1' height='2' fill='white'/><rect x='2' width='1' height='2' fill='%23ED2939'/></svg>"
+        };
+
+        function previewPhoto(input) {
+            const fileLabel = document.getElementById('file-label');
+            const cardPhoto = document.getElementById('card-photo');
+            const placeholder = document.getElementById('photo-placeholder');
+
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    cardPhoto.src = e.target.result;
+                    cardPhoto.style.display = 'block';
+                    placeholder.style.display = 'none';
+                    fileLabel.innerText = "תמונה נטענה בהצלחה";
+                    fileLabel.style.color = "#25D366";
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function updateCard() {
+            const certTypeSelect = document.getElementById('input-cert-type');
+            document.getElementById('card-cert-title').innerText = certTypeSelect.options[certTypeSelect.selectedIndex].value;
+
+            const specSelect = document.getElementById('input-spec-select');
+            document.getElementById('card-spec').innerText = specSelect.options[specSelect.selectedIndex].value;
+
+            document.getElementById('card-name').innerText = document.getElementById('input-name').value.toUpperCase();
+            document.getElementById('card-id').innerText = document.getElementById('input-id').value.toUpperCase();
+            
+            const tierSelect = document.getElementById('input-tier');
+            document.getElementById('card-tier').innerText = tierSelect.options[tierSelect.selectedIndex].value;
+
+            const flagOriginSelect = document.getElementById('input-flag-origin');
+            const originRaw = flagOriginSelect.options[flagOriginSelect.selectedIndex].value;
+            
+            const parts = originRaw.split('|');
+            const code1 = parts[0]; 
+            const textName = parts[1]; 
+            const code2 = document.getElementById('input-flag-partner').value; 
+
+            document.getElementById('card-flag-1').src = EMBEDDED_FLAGS[code1] || EMBEDDED_FLAGS['il'];
+            document.getElementById('card-flag-2').src = EMBEDDED_FLAGS[code2] || EMBEDDED_FLAGS['us'];
+            document.getElementById('card-flag-text').innerText = textName;
+        }
+
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('live-clock').innerText = now.toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }) + " GMT";
+        }
+        updateClock(); setInterval(updateClock, 1000);
+
+        function generateImageCard() {
+            const cardPhoto = document.getElementById('card-photo');
+            if (!cardPhoto.src || cardPhoto.src === window.location.href) {
+                alert("חובה להעלות תמונת מדריך לפני הפקת התעודה.");
+                return;
+            }
+
+            document.getElementById('output-image-container').style.display = 'none';
+            const card = document.getElementById('member-card');
+            
+            html2canvas(card, {
+                scale: 3, 
+                logging: false,
+                useCORS: true,
+                allowTaint: true,
+                backgroundColor: "#FAF6F0"
+            }).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const finalImg = document.getElementById('final-card-image');
+                finalImg.src = imgData;
+                document.getElementById('output-image-container').style.display = 'block';
+                finalImg.scrollIntoView({ behavior: 'smooth' });
+            });
+        }
+        
+        window.onload = updateCard;
+    </script>
+</body>
+</html>
